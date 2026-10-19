@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Functions and Scope</title>
+</head>
+<body>
+    <h2>Functions and Scope in JavaScript</h2>
+
+    <pre id="output"></pre>
+
+    <script>
+        // Standard function with default parameters
+        function rectangleArea(length = 5, width = 4) {
+            return length * width;
+        }
+
+        // Arrow function with default parameters
+        const arrowArea = (length = 5, width = 4) => {
+            return length * width;
+        };
+
+        // Calculate areas
+        let area1 = rectangleArea();
+        let area2 = arrowArea(10, 3);
+
+        // Display results
+        let output = "";
+        output += "Standard Function Area (Default 5x4): " + area1 + "\n";
+        output += "Arrow Function Area (Custom 10x3): " + area2 + "\n";
+
+        // Demonstrate block scope
+        try {
+            {
+                let blockVar = 100;
+            }
+
+            // Accessing outside the block causes an error
+            console.log(blockVar);
+        } catch (error) {
+            output += "Scope Test Error: " + error + "\n";
+        }
+
+        // Display output in browser
+        document.getElementById("output").textContent = output;
+
+        // Display output in console
+        console.log(output);
+    </script>
+</body>
+</html>

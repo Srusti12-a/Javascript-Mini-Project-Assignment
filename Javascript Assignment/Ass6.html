@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Array Methods - Products</title>
+</head>
+<body>
+    <h2>Product Array Operations</h2>
+
+    <pre id="output"></pre>
+
+    <script>
+        // Array of product objects
+        const products = [
+            { name: "Laptop", price: 800 },
+            { name: "Mouse", price: 25 },
+            { name: "Keyboard", price: 45 }
+        ];
+
+        let output = "";
+
+        // 1. forEach() - Print all products
+        output += "-- All Products (forEach) --\n";
+
+        products.forEach(function(product) {
+            output += "Item: " + product.name +
+                      " - Price: $" + product.price + "\n";
+        });
+
+        // 2. filter() - Find products under $50
+        output += "\n-- Filtered Products (Price < $50) --\n";
+
+        const filteredProducts = products.filter(function(product) {
+            return product.price < 50;
+        });
+
+        output += "[ " + filteredProducts.map(function(product) {
+            return "{ name: '" + product.name +
+                   "', price: " + product.price + " }";
+        }).join(", ") + " ]\n";
+
+        // 3. map() - Create formatted product tags
+        output += "\n-- Mapped Product Tags (map) --\n";
+
+        const productTags = products.map(function(product) {
+            return product.name.toUpperCase() +
+                   " costs $" + product.price;
+        });
+
+        output += JSON.stringify(productTags);
+
+        // Display output in browser
+        document.getElementById("output").textContent = output;
+
+        // Display output in console
+        console.log("-- All Products (forEach) --");
+        products.forEach(function(product) {
+            console.log("Item: " + product.name +
+                        " - Price: $" + product.price);
+        });
+
+        console.log("\n-- Filtered Products (Price < $50) --");
+        console.log(filteredProducts);
+
+        console.log("\n-- Mapped Product Tags (map) --");
+        console.log(productTags);
+    </script>
+</body>
+</html>

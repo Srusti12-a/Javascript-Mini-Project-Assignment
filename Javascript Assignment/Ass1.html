@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Variables and Data Types</title>
+</head>
+<body>
+    <h2>Variables, Data Types, and Console Operations</h2>
+
+    <div id="output"></div>
+
+    <script>
+        // Declare variables
+        var name = "Alice";
+        let age = 25;
+        const isEmployed = true;
+        const skills = ["HTML", "CSS", "JavaScript"];
+
+        // Display output in the browser
+        document.getElementById("output").innerHTML =
+            "Name: " + name + " (Type: " + typeof name + ")<br>" +
+            "Age: " + age + " (Type: " + typeof age + ")<br>" +
+            "Is Employed: " + isEmployed + " (Type: " + typeof isEmployed + ")<br>" +
+            "Skills: " + JSON.stringify(skills) + " (Type: " + typeof skills + ")";
+
+        // Display output in the console
+        console.log("Name: " + name + " (Type: " + typeof name + ")");
+        console.log("Age: " + age + " (Type: " + typeof age + ")");
+        console.log("Is Employed: " + isEmployed + " (Type: " + typeof isEmployed + ")");
+        console.log("Skills: " + JSON.stringify(skills) + " (Type: " + typeof skills + ")");
+    </script>
+</body>
+</html>

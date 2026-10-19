@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loop Control Structures</title>
+</head>
+<body>
+    <h2>Loop Control Structures</h2>
+    <pre id="output"></pre>
+
+    <script>
+        let output = "";
+
+        // 1. Multiplication table using for loop
+        output += "-- Multiplication Table of 5 --\n";
+
+        for (let i = 1; i <= 5; i++) {
+            output += "5 x " + i + " = " + (5 * i) + "\n";
+        }
+
+        // 2. Find first number greater than 10
+        // divisible by 6 using while loop and break
+        output += "\n-- First number > 10 divisible by 6 --\n";
+
+        let num = 11;
+
+        while (num > 10) {
+            if (num % 6 === 0) {
+                output += "Found: " + num + "\n";
+                break;
+            }
+            num++;
+        }
+
+        // 3. do...while loop using continue
+        let n = 0;
+
+        do {
+            n++;
+
+            if (n === 2 || n === 4) {
+                continue;
+            }
+
+            // Skip numbers 2 and 4
+        } while (n < 5);
+
+        // Display output in browser
+        document.getElementById("output").textContent = output;
+
+        // Display output in console
+        console.log(output);
+    </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #4f46e5;
+      --border: #e5e7eb;
+      --budget: #059669;
+      --standard: #d97706;
+      --premium: #7c3aed;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 4px; font-size: 1.6rem; }
+    header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
+    main {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      gap: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 { margin: 0 0 14px; font-size: 1.1rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    label { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--muted); gap: 4px; flex: 1; min-width: 140px; }
+    input {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.1); }
+    button.ghost { background: transparent; color: var(--danger); padding: 4px 8px; font-size: 0.9rem; }
+    #message { margin-top: 10px; min-height: 1.2em; font-size: 0.9rem; }
+    #message.error { color: var(--danger); }
+    #message.ok { color: var(--budget); }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .stat { background: var(--bg); border-radius: 10px; padding: 14px; }
+    .stat span { display: block; font-size: 0.8rem; color: var(--muted); }
+    .stat strong { font-size: 1.4rem; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+    th { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    td.num, th.num { text-align: right; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: #fff;
+    }
+    .badge.Budget { background: var(--budget); }
+    .badge.Standard { background: var(--standard); }
+    .badge.Premium { background: var(--premium); }
+    .empty { color: var(--muted); text-align: center; padding: 16px; }
+    ul.plain { margin: 0; padding-left: 18px; }
+    .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .stats.small { margin-bottom: 18px; }
+    .stats.small .stat strong { font-size: 1.1rem; }
+    .chart-title { margin: 18px 0 8px; font-size: 0.9rem; color: var(--muted); font-weight: 600; }
+    #priceChart { width: 100%; height: auto; display: block; }
+    .cat-row { display: grid; grid-template-columns: 90px 1fr 150px; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+    .cat-track { background: var(--bg); border-radius: 999px; height: 14px; overflow: hidden; }
+    .cat-fill { height: 100%; border-radius: 999px; transition: width 0.3s; }
+    .cat-meta { color: var(--muted); font-size: 0.8rem; text-align: right; }
+    .insight { margin-top: 14px; padding: 12px 14px; background: var(--bg); border-left: 4px solid var(--primary); border-radius: 6px; font-size: 0.92rem; }
+    @media (max-width: 520px) {
+      th:nth-child(4), td:nth-child(4) { display: none; }
+      .cat-row { grid-template-columns: 70px 1fr; }
+      .cat-meta { grid-column: 1 / -1; text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Product Inventory &amp; Analytics Dashboard</h1>
+    <p>Add products, see categories, and analyse your stock</p>
+  </header>
+
+  <main>
+    <!-- Add product -->
+    <section class="card">
+      <h2>Add a Product</h2>
+      <form id="addForm" class="row" autocomplete="off">
+        <label>Product name
+          <input id="nameInput" type="text" placeholder="e.g. Monitor" />
+        </label>
+        <label>Price ($)
+          <input id="priceInput" type="text" inputmode="decimal" placeholder="e.g. 150" />
+        </label>
+        <button type="submit">Add</button>
+      </form>
+      <div id="message"></div>
+    </section>
+
+    <!-- Analytics -->
+    <section class="card">
+      <h2>Financial Analytics</h2>
+      <div class="stats">
+        <div class="stat"><span>Total Inventory Value</span><strong id="totalValue">$0</strong></div>
+        <div class="stat"><span>Number of Items</span><strong id="itemCount">0</strong></div>
+        <div class="stat"><span>Average Price</span><strong id="avgPrice">$0</strong></div>
+      </div>
+    </section>
+
+    <!-- Data analytics -->
+    <section class="card">
+      <h2>Data Analytics</h2>
+      <div class="stats small">
+        <div class="stat"><span>Most Expensive</span><strong id="highestItem">–</strong></div>
+        <div class="stat"><span>Cheapest</span><strong id="lowestItem">–</strong></div>
+        <div class="stat"><span>Median Price</span><strong id="medianPrice">–</strong></div>
+        <div class="stat"><span>Price Range</span><strong id="priceRange">–</strong></div>
+      </div>
+
+      <div class="chart-title">Price by product</div>
+      <div id="priceChartWrap"></div>
+
+      <div class="chart-title">Category breakdown (share of total value)</div>
+      <div id="categoryBreakdown"></div>
+
+      <div class="insight" id="insightText">Add products to see insights.</div>
+    </section>
+
+    <!-- Roster -->
+    <section class="card">
+      <h2>Inventory Roster</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th><th class="num">Price</th><th>Category</th>
+            <th class="num">Final price (after discount + tax)</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+      <div class="row" style="margin-top:16px">
+        <label>Discount (%)
+          <input id="discountInput" type="number" min="0" max="100" value="10" />
+        </label>
+        <label>Tax (%)
+          <input id="taxInput" type="number" min="0" max="100" value="18" />
+        </label>
+      </div>
+    </section>
+
+    <div class="two">
+      <section class="card">
+        <h2>Affordable Items (Under $<span id="limitLabel">200</span>)</h2>
+        <label style="margin-bottom:12px">Price limit ($)
+          <input id="limitInput" type="number" min="1" value="200" />
+        </label>
+        <ul id="affordableList" class="plain"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Formatted Report List</h2>
+        <ul id="reportList" class="plain"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ---------- Data ----------
+    const inventory = [
+      { name: "Laptop", price: 800 },
+      { name: "Mouse", price: 25 },
+    ];
+
+    // ---------- Category thresholds (switch) ----------
+    const BUDGET_LIMIT = 50;
+    const PREMIUM_LIMIT = 500;
+
+    function assignCategory(price) {
+      switch (true) {
+        case price < BUDGET_LIMIT:   return "Budget";
+        case price < PREMIUM_LIMIT:  return "Standard";
+        default:                     return "Premium";
+      }
+    }
+
+    // ---------- Functions & scope ----------
+    function calculateTotalValue(items) {
+      let total = 0;
+      for (const item of items) total += item.price;
+      return total;
+    }
+
+    const applyAdjustments = (price, taxRate = 0, discountRate = 0) => {
+      const discounted = price * (1 - discountRate);
+      return Number((discounted * (1 + taxRate)).toFixed(2));
+    };
+
+    const money = (n) => "$" + Number(n.toFixed(2));
+
+    // ---------- DOM references ----------
+    const $ = (id) => document.getElementById(id);
+    const form = $("addForm");
+    const message = $("message");
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = type;
+    }
+
+    // ---------- Validation & add ----------
+    function addProduct(rawName, rawPrice) {
+      // Validate with if...else
+      if (rawName.trim() === "" || rawPrice.trim() === "") {
+        showMessage("Please enter both a name and a price.", "error");
+        return false;
+      }
+
+      const name = rawName.trim();
+      const price = Number(rawPrice); // explicit conversion
+
+      if (Number.isNaN(price) || price <= 0) {
+        showMessage(`"${rawPrice}" is not a valid price.`, "error");
+        return false;
+      }
+
+      // Loop search for duplicates with break
+      let duplicate = false;
+      for (const item of inventory) {
+        if (item.name.toLowerCase() === name.toLowerCase()) {
+          duplicate = true;
+          break;
+        }
+      }
+      if (duplicate) {
+        showMessage(`"${name}" is already in the inventory.`, "error");
+        return false;
+      }
+
+      inventory.push({ name, price });
+      showMessage(`Added "${name}" at ${money(price)}.`, "ok");
+      return true;
+    }
+
+    // ---------- Rendering ----------
+    function render() {
+      const discount = (Number($("discountInput").value) || 0) / 100;
+      const tax = (Number($("taxInput").value) || 0) / 100;
+      const limit = Number($("limitInput").value) || 0;
+
+      // Roster table
+      const body = $("rosterBody");
+      body.innerHTML = "";
+      if (inventory.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" class="empty">No products yet.</td></tr>';
+      }
+      inventory.forEach((item, index) => {
+        const category = assignCategory(item.price);
+        const final = applyAdjustments(item.price, tax, discount);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td></td>
+          <td class="num">${money(item.price)}</td>
+          <td><span class="badge ${category}">${category}</span></td>
+          <td class="num">${money(final)}</td>
+          <td><button class="ghost" data-index="${index}">Remove</button></td>`;
+        tr.children[0].textContent = item.name; // safe against HTML injection
+        body.appendChild(tr);
+      });
+
+      // Stats
+      const total = calculateTotalValue(inventory);
+      $("totalValue").textContent = money(total);
+      $("itemCount").textContent = inventory.length;
+      $("avgPrice").textContent = inventory.length ? money(total / inventory.length) : "$0";
+
+      // filter(): affordable items
+      $("limitLabel").textContent = limit;
+      const affordable = inventory.filter((item) => item.price < limit);
+      $("affordableList").innerHTML = "";
+      if (affordable.length === 0) {
+        $("affordableList").innerHTML = '<li class="empty" style="list-style:none">None</li>';
+      }
+      affordable.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item.name;
+        $("affordableList").appendChild(li);
+      });
+
+      // map(): formatted report
+      const report = inventory.map((item) => `${item.name.toUpperCase()}: $${item.price}`);
+      $("reportList").innerHTML = "";
+      report.forEach((line) => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        $("reportList").appendChild(li);
+      });
+
+      renderAnalytics();
+    }
+
+    // ---------- Data analytics ----------
+    const CATEGORY_COLORS = { Budget: "#059669", Standard: "#d97706", Premium: "#7c3aed" };
+
+    const escapeHtml = (s) =>
+      s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    function median(values) {
+      if (values.length === 0) return 0;
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function renderAnalytics() {
+      const chartWrap = $("priceChartWrap");
+      const breakdown = $("categoryBreakdown");
+
+      if (inventory.length === 0) {
+        ["highestItem", "lowestItem", "medianPrice", "priceRange"].forEach((id) => ($(id).textContent = "–"));
+        chartWrap.innerHTML = '<div class="empty">No data to chart.</div>';
+        breakdown.innerHTML = "";
+        $("insightText").textContent = "Add products to see insights.";
+        return;
+      }
+
+      const prices = inventory.map((item) => item.price);
+      const total = calculateTotalValue(inventory);
+      const highest = inventory.reduce((a, b) => (b.price > a.price ? b : a));
+      const lowest = inventory.reduce((a, b) => (b.price < a.price ? b : a));
+
+      $("highestItem").textContent = `${highest.name} (${money(highest.price)})`;
+      $("lowestItem").textContent = `${lowest.name} (${money(lowest.price)})`;
+      $("medianPrice").textContent = money(median(prices));
+      $("priceRange").textContent = `${money(lowest.price)} – ${money(highest.price)}`;
+
+      // ----- Horizontal bar chart (SVG), sorted by price -----
+      const sorted = [...inventory].sort((a, b) => b.price - a.price);
+      const rowH = 30, labelW = 110, chartW = 600, valueW = 70;
+      const barMax = chartW - labelW - valueW;
+      const height = sorted.length * rowH + 6;
+
+      let svg = `<svg id="priceChart" viewBox="0 0 ${chartW} ${height}" role="img" aria-label="Bar chart of product prices">`;
+      sorted.forEach((item, i) => {
+        const y = i * rowH + 4;
+        const w = Math.max(2, (item.price / highest.price) * barMax);
+        const color = CATEGORY_COLORS[assignCategory(item.price)];
+        const label = item.name.length > 14 ? item.name.slice(0, 13) + "…" : item.name;
+        svg += `<text x="0" y="${y + 17}" font-size="13" style="fill:var(--text)">${escapeHtml(label)}</text>`;
+        svg += `<rect x="${labelW}" y="${y + 3}" width="${w}" height="18" rx="4" fill="${color}"></rect>`;
+        svg += `<text x="${labelW + w + 6}" y="${y + 17}" font-size="12" style="fill:var(--muted)">${money(item.price)}</text>`;
+      });
+      svg += "</svg>";
+      chartWrap.innerHTML = svg;
+
+      // ----- Category breakdown -----
+      const groups = { Budget: { count: 0, value: 0 }, Standard: { count: 0, value: 0 }, Premium: { count: 0, value: 0 } };
+      inventory.forEach((item) => {
+        const g = groups[assignCategory(item.price)];
+        g.count++;
+        g.value += item.price;
+      });
+
+      breakdown.innerHTML = "";
+      Object.entries(groups).forEach(([name, g]) => {
+        const pct = total ? (g.value / total) * 100 : 0;
+        const row = document.createElement("div");
+        row.className = "cat-row";
+        row.innerHTML = `
+          <span><span class="badge ${name}">${name}</span></span>
+          <div class="cat-track"><div class="cat-fill" style="width:${pct}%;background:${CATEGORY_COLORS[name]}"></div></div>
+          <span class="cat-meta">${g.count} item${g.count === 1 ? "" : "s"} · ${money(g.value)} · ${pct.toFixed(1)}%</span>`;
+        breakdown.appendChild(row);
+      });
+
+      // ----- Auto-generated insight -----
+      const top = Object.entries(groups).reduce((a, b) => (b[1].value > a[1].value ? b : a));
+      const topPct = total ? ((top[1].value / total) * 100).toFixed(1) : 0;
+      const avg = total / inventory.length;
+      const aboveAvg = inventory.filter((item) => item.price > avg).length;
+      $("insightText").textContent =
+        `${top[0]} items make up ${topPct}% of your inventory value. ` +
+        `${aboveAvg} of ${inventory.length} products are priced above the average (${money(avg)}).`;
+    }
+
+    // ---------- Events ----------
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const added = addProduct($("nameInput").value, $("priceInput").value);
+      if (added) {
+        form.reset();
+        $("nameInput").focus();
+      }
+      render();
+    });
+
+    $("rosterBody").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-index]");
+      if (!btn) return;
+      inventory.splice(Number(btn.dataset.index), 1);
+      showMessage("Item removed.", "ok");
+      render();
+    });
+
+    ["discountInput", "taxInput", "limitInput"].forEach((id) =>
+      $(id).addEventListener("input", render)
+    );
+
+    render();
+  </script>
+</body>
+</html>
